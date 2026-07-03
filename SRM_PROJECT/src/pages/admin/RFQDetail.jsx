@@ -15,7 +15,7 @@ export function RFQDetail() {
   const [bidsList, setBidsList] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1/SUPPLIER-RELATIONSHIP-MANAGEMENT/SRM_PROJECT/backend/api').replace(/\/$/, '');
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1/SUPPLIER-RELATIONSHIP-MANAGEMENT-main/SRM_PROJECT/backend/api').replace(/\/$/, '');
 
   useEffect(() => {
     // 1. Fetch RFQs to find the specific RFQ

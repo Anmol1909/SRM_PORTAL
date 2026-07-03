@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Download, Eye, X, FileText, Truck } from 'lucide-react';
 import { Button } from '../../components/Button.jsx';
 import { Card, CardHeader } from '../../components/Card.jsx';
@@ -9,6 +10,7 @@ import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { currency } from '../../utils/formatters.js';
 import { getApiBaseUrl } from '../../utils/apiBase.js';
 import { nextSupplierAction, trackingStatusLabel } from '../../utils/orderTracking.js';
+import { CustomNotification } from '../../components/CustomNotification.jsx';
 
 function getSupplierUser() {
   try {
@@ -20,33 +22,53 @@ function getSupplierUser() {
 }
 
 export function SupplierOrders() {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [receipts, setReceipts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPo, setSelectedPo] = useState(null);
   const [trackingData, setTrackingData] = useState(null);
   const [poDetails, setPoDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [customAlert, setCustomAlert] = useState({ isOpen: false, type: 'info', title: '', message: '' });
 
   const apiBaseUrl = getApiBaseUrl();
   const currentUser = getSupplierUser();
 
   const fetchSupplierOrders = () => {
     setLoading(true);
-    fetch(`${apiBaseUrl}/order-tracking.php?supplier_id=${currentUser.id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.orders)) {
+    Promise.all([
+      fetch(`${apiBaseUrl}/order-tracking.php?supplier_id=${currentUser.id}`).then((res) => res.json()).catch(() => ({ success: false })),
+      fetch(`${apiBaseUrl}/invoices.php`).then((res) => res.json()).catch(() => ({ success: false })),
+      fetch(`${apiBaseUrl}/receipts.php`).then((res) => res.json()).catch(() => ({ success: false }))
+    ])
+      .then(([ordersRes, invoicesRes, receiptsRes]) => {
+        if (ordersRes.success && Array.isArray(ordersRes.orders)) {
           setOrders(
-            data.orders.filter(
+            ordersRes.orders.filter(
               (order) => order.tracking_status !== 'PAYMENT_COMPLETED' && order.status !== 'fulfilled' && order.status !== 'cancelled',
             ),
           );
         }
+        if (invoicesRes.success && Array.isArray(invoicesRes.invoices)) {
+          setInvoices(invoicesRes.invoices);
+        } else {
+          const saved = localStorage.getItem('srm_invoices');
+          if (saved) setInvoices(JSON.parse(saved));
+        }
+        if (receiptsRes.success && Array.isArray(receiptsRes.receipts)) {
+          setReceipts(receiptsRes.receipts);
+        } else {
+          const saved = localStorage.getItem('srm_receipts');
+          if (saved) setReceipts(JSON.parse(saved));
+        }
       })
-      .catch((err) => console.error('Failed to fetch supplier orders:', err))
+      .catch((err) => console.error('Failed to fetch supplier orders and metadata:', err))
       .finally(() => setLoading(false));
   };
+
 
   useEffect(() => {
     fetchSupplierOrders();
@@ -98,16 +120,195 @@ export function SupplierOrders() {
           }
           fetchSupplierOrders();
         } else {
-          alert(data.message || 'Failed to update tracking');
+          setCustomAlert({
+            isOpen: true,
+            type: 'error',
+            title: 'Fulfillment Update Failed',
+            message: data.message || 'Failed to update tracking'
+          });
         }
       })
-      .catch(() => alert('Failed to update order tracking.'))
+      .catch(() => {
+        setCustomAlert({
+          isOpen: true,
+          type: 'error',
+          title: 'Update Error',
+          message: 'Failed to update order tracking.'
+        });
+      })
       .finally(() => setActionLoading(false));
+  };
+
+  const isInvoiceEligible = (po) => {
+    const grnExists = receipts.some(r => r.po === po.po_number);
+    if (!grnExists) return false;
+
+    const isDeliveredOrRecorded = 
+      po.status?.toLowerCase() === 'grn_recorded' || 
+      po.status?.toLowerCase() === 'delivered' ||
+      po.tracking_status === 'GRN_GENERATED' || 
+      po.tracking_status === 'INVOICE_SUBMITTED' ||
+      po.tracking_status === 'DELIVERED';
+    if (!isDeliveredOrRecorded) return false;
+
+    const blockingStatuses = ['Draft', 'Submitted', 'Under Review', 'Approved', 'Payment Processing', 'Paid'];
+    const hasBlockingInvoice = invoices.some(
+      inv => inv.po === po.po_number && blockingStatuses.includes(inv.status)
+    );
+    if (hasBlockingInvoice) return false;
+
+    return true;
+  };
+
+  const handleGenerateInvoice = async (po) => {
+    setActionLoading(true);
+    try {
+      let detailedPo = null;
+      try {
+        const poRes = await fetch(`${apiBaseUrl}/purchase_orders.php?id=${po.id}`).then(res => res.json());
+        if (poRes.success && poRes.po) {
+          detailedPo = poRes.po;
+        }
+      } catch (err) {
+        console.warn('Failed to fetch detailed PO, using fallback PO:', err);
+      }
+
+      if (!detailedPo) {
+        detailedPo = {
+          ...po,
+          items: []
+        };
+      }
+
+      const poReceipts = receipts.filter(r => r.po === po.po_number);
+      const totalAccepted = poReceipts.reduce((sum, r) => sum + (Number(r.accepted) || 0), 0);
+      const firstReceipt = poReceipts[0];
+      const grnId = firstReceipt ? firstReceipt.receipt : 'REC-TEMP';
+
+      let billedItems = [];
+      let subtotal = 0;
+
+      let grnItems = [];
+      if (firstReceipt && firstReceipt.remarks) {
+        try {
+          grnItems = JSON.parse(firstReceipt.remarks);
+        } catch (e) {
+          console.warn('Failed to parse GRN items from remarks:', e);
+        }
+      }
+
+      if (detailedPo.items && detailedPo.items.length > 0) {
+        billedItems = detailedPo.items.map(item => {
+          let acceptedQty = 0;
+          if (grnItems.length > 0) {
+            const matchedGrnItem = grnItems.find(gi => 
+              gi.name.toLowerCase().trim() === item.item_name.toLowerCase().trim()
+            );
+            if (matchedGrnItem) {
+              acceptedQty = Number(matchedGrnItem.accepted) || 0;
+            }
+          }
+          
+          if (acceptedQty === 0) {
+            const matchingReceipts = poReceipts.filter(r => 
+              r.item.toLowerCase().includes(item.item_name.toLowerCase()) ||
+              item.item_name.toLowerCase().includes(r.item.toLowerCase())
+            );
+            acceptedQty = matchingReceipts.reduce((sum, r) => sum + (Number(r.accepted) || 0), 0);
+          }
+
+          const itemQty = acceptedQty > 0 ? acceptedQty : item.quantity;
+          const totalPrice = itemQty * item.unit_price;
+          subtotal += totalPrice;
+          return {
+            item_name: item.item_name,
+            quantity: itemQty,
+            unit_price: item.unit_price,
+            total_price: totalPrice
+          };
+        });
+      } else {
+        const itemQty = totalAccepted > 0 ? totalAccepted : 2500;
+        const poTotal = po.total_amount;
+        subtotal = (poTotal - 200) / 1.18;
+        if (subtotal <= 0) subtotal = poTotal;
+        const unitPrice = itemQty > 0 ? (subtotal / itemQty) : subtotal;
+        billedItems = [{
+          item_name: `Billed Components / Services (${po.po_number})`,
+          quantity: itemQty,
+          unit_price: Number(unitPrice.toFixed(2)),
+          total_price: Number(subtotal.toFixed(2))
+        }];
+      }
+
+      const taxRate = 0.18;
+      const tax = Number((subtotal * taxRate).toFixed(2));
+      const freight = 200.00;
+      const grandTotal = Number((subtotal + tax + freight).toFixed(2));
+
+      const year = new Date().getFullYear();
+      let nextNum = 1;
+      invoices.forEach(inv => {
+        const match = inv.id.match(/INV-\d+-(\d+)/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num >= nextNum) nextNum = num + 1;
+        }
+      });
+      const invoiceId = `INV-${year}-${String(nextNum).padStart(4, '0')}`;
+
+      const draftInvoice = {
+        id: invoiceId,
+        po: po.po_number,
+        amount: grandTotal,
+        submitted: new Date().toISOString().split('T')[0],
+        due: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        status: 'Draft',
+        quantity: totalAccepted || 2500,
+        generated_from_po_id: po.id,
+        generated_from_grn_id: grnId,
+        items: billedItems
+      };
+
+      try {
+        await fetch(`${apiBaseUrl}/invoices.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(draftInvoice)
+        }).then(res => res.json());
+      } catch (err) {
+        console.warn('Failed to save Draft invoice to database, using localStorage only:', err);
+      }
+
+      const updatedInvoices = [draftInvoice, ...invoices];
+      setInvoices(updatedInvoices);
+      localStorage.setItem('srm_invoices', JSON.stringify(updatedInvoices));
+
+      setCustomAlert({
+        isOpen: true,
+        type: 'success',
+        title: 'Invoice Generated',
+        message: `Draft invoice ${invoiceId} generated successfully!`,
+        onClose: () => {
+          navigate('/supplier/invoices', { state: { openInvoiceId: invoiceId } });
+        }
+      });
+    } catch (err) {
+      console.error(err);
+      setCustomAlert({
+        isOpen: true,
+        type: 'error',
+        title: 'Generation Failed',
+        message: 'Error generating invoice'
+      });
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const columns = [
     { key: 'po_number', header: 'PO Number', render: (row) => <span className="font-bold font-mono text-slate-800 dark:text-slate-200">{row.po_number}</span> },
-    { key: 'buyer', header: 'Buyer Account', render: () => <span className="font-semibold text-slate-900 dark:text-slate-100">Tata Motors Ltd.</span> },
+    { key: 'buyer', header: 'Buyer Account', render: () => <span className="font-semibold text-slate-900 dark:text-slate-100">Nexus Manufacturing Ltd.</span> },
     { key: 'total_amount', header: 'Amount', render: (row) => <span className="font-bold text-slate-950 dark:text-slate-100">{currency(row.total_amount)}</span> },
     { key: 'order_date', header: 'Order Date', render: (row) => <span>{row.order_date ? row.order_date.split(' ')[0] : '-'}</span> },
     { key: 'delivery_date', header: 'Commit Date', render: (row) => <span>{row.delivery_date || '-'}</span> },
@@ -126,6 +327,15 @@ export function SupplierOrders() {
       header: 'Actions',
       render: (row) => (
         <div className="flex items-center gap-2">
+          {isInvoiceEligible(row) && (
+            <button
+              onClick={() => handleGenerateInvoice(row)}
+              disabled={actionLoading}
+              className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 text-xs font-semibold shadow transition"
+            >
+              <FileText className="h-3.5 w-3.5" /> Generate Invoice
+            </button>
+          )}
           <button
             onClick={() => handleInspectPo(row.id)}
             className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
@@ -235,7 +445,7 @@ export function SupplierOrders() {
                   </div>
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">BUYER</span>
-                    <span className="font-semibold text-slate-900 dark:text-slate-100">Tata Motors Ltd.</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-100">Nexus Manufacturing Ltd.</span>
                   </div>
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">TOTAL ORDER VALUE</span>
@@ -324,6 +534,19 @@ export function SupplierOrders() {
           </div>
         </div>
       )}
+
+      <CustomNotification
+        isOpen={customAlert.isOpen}
+        type={customAlert.type}
+        title={customAlert.title}
+        message={customAlert.message}
+        onClose={() => {
+          if (customAlert.onClose) {
+            customAlert.onClose();
+          }
+          setCustomAlert(a => ({ ...a, isOpen: false }));
+        }}
+      />
     </>
   );
 }

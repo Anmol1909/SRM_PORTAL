@@ -189,7 +189,7 @@ switch ($method) {
             exit;
         }
 
-        $allowed = ['issued', 'pending', 'shipped', 'delivered', 'fulfilled', 'cancelled'];
+        $allowed = ['issued', 'pending', 'shipped', 'delivered', 'fulfilled', 'cancelled', 'awaiting_receipt', 'grn_recorded'];
         $statusValue = strtolower(trim((string)$input['status']));
         if (!in_array($statusValue, $allowed)) {
             http_response_code(400);

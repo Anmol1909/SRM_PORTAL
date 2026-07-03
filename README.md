@@ -1,15 +1,41 @@
+<div align="center">
+
 # 🌐 Supplier Relationship Management (SRM) Portal
+
+<a href="https://supplier-relationship-management.vercel.app/" target="_blank" rel="noopener noreferrer">
+  <img src="https://img.shields.io/badge/Live-Demo-success?style=for-the-badge&logo=vercel" alt="Live Demo">
+</a>
+
+**Enterprise-Grade Procurement & Supplier Collaboration Platform**
 
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Framer Motion](https://img.shields.io/badge/Framer_Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white)](https://www.framer.com/motion/)
-[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://www.php.net/)
+[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
 
-Welcome to the **Supplier Relationship Management (SRM) Portal**, a state-of-the-art enterprise procurement and supplier collaboration platform. Built with a focus on rich aesthetics, sleek glassmorphism, responsive role-based access, and fluid micro-animations, this web application connects **Suppliers** and **Administrators** seamlessly through a unified interface.
+A state-of-the-art procurement lifecycle platform connecting **Suppliers** and **Administrators** through a unified, role-based interface. Built with rich glassmorphism aesthetics, fluid micro-animations, and real-time cross-tab notifications — modeled after industry solutions like SAP Ariba, Coupa, and Oracle Procurement.
 
-The portal digitizes how enterprise companies manage their **Procurement Lifecycle** in real life (similar to SAP Ariba, Coupa, or Oracle Procurement) by automating document processing, supplier selection, contract issuing, and invoice payouts.
+</div>
+
+---
+
+## 📑 Table of Contents
+
+- [User Interface](#-immersive-user-interface)
+- [System Architecture (DFD)](#-system-architecture--data-flow)
+- [Key Modules & Features](#-key-modules--features)
+- [PDF Parsing Engine](#-client-side-pdf-parsing-engine)
+- [Security & Vulnerability Auditing](#️-security--vulnerability-auditing)
+- [Repository Structure](#-repository-structure)
+- [Setup & Installation](#️-setup--installation)
+- [Production Deployment](#-production-deployment)
+- [Testing & Route Bypass Guides](#-testing--route-bypass-guides)
+- [10-Stage Procurement Flow](#-10-stage-consolidated-sourcing--billing-flow)
+- [Tech Stack](#-tech-stack)
+- [Documentation](#-documentation)
+- [License](#-license)
 
 ---
 
@@ -17,19 +43,23 @@ The portal digitizes how enterprise companies manage their **Procurement Lifecyc
 
 The portal utilizes a cutting-edge **split-pane glassmorphism design system** featuring vibrant, high-fidelity HSL gradients, organic light-fog glow effects, and complex SVG/motion-driven visualizations.
 
-### Let's Get Started Landing Page
-Here is the high-fidelity role-based landing page, allowing users to choose their appropriate portal:
+| Role Selection | Register Wizard |
+| :---: | :---: |
+| ![Role Selection](SRM_PROJECT/public/images/role-selection.png) | ![Register](SRM_PROJECT/public/images/register.png) |
 
-![SRM Portal Role Selection Landing Page](SRM_PROJECT/public/images/role-selection.png)
-![SRM Portal Role Selection Login Page](SRM_PROJECT/public/images/login.png)
-![SRM Supplier Page](SRM_PROJECT/public/images/supplier.png)
-![SRM Admin Page](SRM_PROJECT/public/images/admin.png)
+| Supplier Login | Admin Login |
+| :---: | :---: |
+| ![Supplier Login](SRM_PROJECT/public/images/supplier-login.png) | ![Admin Login](SRM_PROJECT/public/images/admin-login.png) |
+
+| Supplier Console Dashboard | Admin Command Center |
+| :---: | :---: |
+| ![Supplier Dashboard](SRM_PROJECT/public/images/supplier-dashboard.png) | ![Admin Dashboard](SRM_PROJECT/public/images/admin-dashboard.png) |
 
 ---
 
-## 📊 Dashboard Data Flow Diagram (DFD)
+## 📊 System Architecture & Data Flow
 
-The diagram below represents the functional Level-1 Data Flow Diagram (DFD) of the SRM Portal dashboards, showcasing how information moves between the roles (Admin, Supplier), dashboard engine processes, and the database stores:
+The Level-1 Data Flow Diagram below illustrates how information moves between the two user roles (Admin, Supplier), the portal's dashboard engine processes, and the MySQL data stores:
 
 ```mermaid
 graph TD
@@ -105,52 +135,72 @@ graph TD
 ## 🚀 Key Modules & Features
 
 ### 1. 🔐 Role-Based Authentication System
-*   **Dual Entry Gateways**: Fully styled custom entry portals for **Suppliers** and **Admins**.
-*   **Iridescent Globe Visualization**: An elegant, dynamic SVG globe animating interactive nodes and connection pulse lines on the presentation pane.
-*   **Transition Magic**: Powered by **Framer Motion** for springy role switches, interactive hover states, card lifting, and floating transitions.
-*   **Guided Registration**: A 3-step create-account flow that collects account details, business/department details, and verification in sequence.
-*   **Tab Independence**: Uses `sessionStorage` to isolate user sessions per browser tab. You can test admin workflows in Tab A and supplier workflows in Tab B simultaneously without session conflicts.
 
-### 2. 🛡️ Admin Portal (Procurement Control Center)
+- **Dual Entry Gateways** — Fully styled custom entry portals for Suppliers and Admins.
+- **Iridescent Globe Visualization** — Dynamic SVG globe animating interactive nodes and connection pulse lines on the presentation pane.
+- **Transition Animations** — Powered by Framer Motion for springy role switches, interactive hover states, card lifting, and floating transitions.
+- **Guided Registration** — A 3-step wizard collecting account details, business/department information, and verification in sequence.
+- **Tab Independence** — Uses `sessionStorage` to isolate user sessions per browser tab, enabling simultaneous admin and supplier testing without session conflicts.
+
+### 2. 🛡️ Admin Portal — Procurement Control Center
+
 Provides administrators with complete control and visibility over the supply chain:
-*   **Admin Dashboard**: Real-time analytical breakdown of total supplier participation, purchase commitments, and average RFQ cycle times.
-*   **RFQ Sourcing**: Dynamic forms to author and broadcast RFQs instantly. Auto-fills fields by parsing uploaded PDF specs side-by-side.
-*   **Advanced Bid Comparison**: Interactive charts (Recharts) comparing multiple supplier bids per RFQ side-by-side to determine the best price and quality metrics.
-*   **Purchase Orders (PO)**: Manage PO pipelines, track order status, and issue agreements.
-*   **Receipts & Reviews (GRN)**: Record Goods Receipt Notes (GRN) to check quantities and inspect deliveries. Integrates a multi-item grid parsed from delivery receipts.
-*   **Invoice Approval workbench**: Review invoices, check a 3-way match (PO vs GRN vs Invoice), and record payouts.
-*   **Governance & Audit Trail**: Monitor system logs to inspect chronological action trails for security.
 
-### 3. 🚚 Supplier Portal (Partner Workspace)
+| Module | Description |
+| --- | --- |
+| **Dashboard** | Real-time analytical breakdown of supplier participation, purchase commitments, and average RFQ cycle times. |
+| **RFQ Sourcing** | Dynamic forms to author and broadcast RFQs. Auto-fills fields by parsing uploaded PDF specs side-by-side. |
+| **Bid Comparison** | Interactive Recharts visualizations comparing multiple supplier bids per RFQ on price and quality metrics. |
+| **Purchase Orders** | Manage PO pipelines, track order status, and issue agreements. |
+| **Receipts & GRN** | Record Goods Receipt Notes to check quantities and inspect deliveries with a multi-item grid parsed from delivery receipts. |
+| **Invoice Workbench** | Review invoices, execute 3-way match (PO vs. GRN vs. Invoice), and record payouts. |
+| **Governance & Audit** | Monitor system logs and inspect chronological action trails for security compliance. |
+
+### 3. 🚚 Supplier Portal — Partner Workspace
+
 Empowers suppliers to manage quotations, products, and fulfillment:
-*   **Supplier Dashboard**: View active bids, delivery rates, and performance statistics.
-*   **RFQ Sourcing Inbox**: Search, filter, and bid directly on open Requests for Quotations (RFQs).
-*   **Product Catalog Management**: Easily list, edit, and keep track of supplier items.
-*   **Order & Delivery Tracker**: Live statuses of ongoing purchase orders, shipments, and invoice histories.
-*   **KPI & Performance Metrics**: Real-time ratings and scorecards evaluating delivery, pricing, and quality.
-*   **Compliance Uploads**: Keep credentials active by uploading ISO Certificates or W-9 tax forms, automatically parsed for expiry dates.
+
+| Module | Description |
+| --- | --- |
+| **Dashboard** | View active bids, delivery rates, and performance statistics. |
+| **RFQ Sourcing Inbox** | Search, filter, and bid directly on open Requests for Quotations. |
+| **Product Catalog** | List, edit, and manage supplier items with unique SKU tracking. |
+| **Order & Delivery Tracker** | Live statuses of ongoing purchase orders, shipments, and invoice histories. |
+| **KPI & Performance** | Real-time ratings and scorecards evaluating delivery, pricing, and quality. |
+| **Compliance Uploads** | Upload ISO Certificates or W-9 tax forms with automatic expiry-date parsing. |
+
+### 4. 🔔 Real-Time Toast Notification System
+
+- **Animated Entries & Exits** — Premium sliding/fading card animations powered by Framer Motion.
+- **Dynamic Categorization** — Context-aware color palettes, typography, and iconography for Sourcing (RFQs, Bids), Orders (POs, GRNs), and Negotiations (Messages, counter-offers).
+- **Auto-Dismissal** — Automatically fades out in 5 seconds with click-to-dismiss and interactive hover states.
+- **Cross-Tab Synchronization** — Uses `localStorage` change tracking and browser `storage` events to broadcast alerts instantly across multiple open tabs.
+- **One-Click Deep Linking** — Clicking a toast marks the notification as read and routes the user directly to the relevant page.
 
 ---
 
 ## ⚡ Client-Side PDF Parsing Engine
 
-The portal eliminates manual data entry by extracting metadata from business documents entirely within the user's browser. 
+The portal eliminates manual data entry by extracting metadata from business documents entirely within the user's browser — no data leaves the client.
 
 ```
 [PDF Uploaded] ──> [Dynamic CDN Loader (pdf.js)] ──> [Text Extraction] ──> [Regex Parsers] ──> [Form Auto-Fill]
 ```
 
-### Module Parsing Details
-1.  **RFQ Specification PDF** (`parseRfqPdf`): Extracts title, category (Logistics, Facilities, Services, Manufacturing), deadline, and estimated budget.
-2.  **Bid Quotation PDF** (`parseBidPdf`): Extracts bid package reference, warranty, delivery time, and total price. Uses strict word boundaries (`\btotal\b`) to avoid extracting individual line-item unit prices (e.g. `$18.50`) instead of the grand total bid (e.g. `$125,000`).
-3.  **Delivery Receipt PDF** (`parseGrnPdf`): Multi-item table-row parser extracts and sums individual quantities (Delivered/Accepted) from parsed columns.
-4.  **Commercial Invoice PDF** (`parseInvoicePdf`): Extracts invoice ID, PO number, and invoice amount using strict boundary matches.
-5.  **Compliance Document PDF** (`parseCompliancePdf`): Extracts certification ID, expiry date, issuer, and document type.
+### Supported Document Types
 
-### UI Layout Sizing & Verification Window Behavior
-The modals resize dynamically depending on whether a PDF preview is active to display a clean, side-by-side verification screen:
-*   **Standard View (No PDF)**: Modals open centered at standard width (`lg` - 768px or `xl` - 1024px).
-*   **Split-Screen View (With PDF)**: Modals automatically expand to `xxl` (`max-w-7xl` / 1280px). The left pane renders editable input fields populated by the parser, while the right pane renders an interactive PDF preview `iframe`, enabling quick verification prior to saving.
+| Parser | Input | Extracted Fields |
+| --- | --- | --- |
+| `parseRfqPdf` | RFQ Specification | Title, category, deadline, estimated budget |
+| `parseBidPdf` | Bid Quotation | Reference, warranty, delivery time, total price |
+| `parseGrnPdf` | Delivery Receipt | Multi-row item quantities (Delivered / Accepted) |
+| `parseInvoicePdf` | Commercial Invoice | Invoice ID, PO number, invoice amount |
+| `parseCompliancePdf` | Compliance Document | Certification ID, expiry date, issuer, document type |
+
+### Adaptive Modal Layout
+
+- **Standard View** (no PDF) — Modals open centered at standard width (`lg` / `xl`).
+- **Split-Screen View** (with PDF) — Modals expand to `max-w-7xl` (1280 px). Left pane renders editable auto-filled fields; right pane renders an interactive PDF preview `iframe` for verification.
 
 ---
 
@@ -158,125 +208,207 @@ The modals resize dynamically depending on whether a PDF preview is active to di
 
 The portal is audited and patched against common enterprise vulnerabilities:
 
-*   **SQL Injection (SQLi) Prevention**: All dynamic database interactions in the PHP REST APIs use MySQLi prepared statements. Input parameters are bound strictly as literals, making SQL injection impossible.
-*   **Password Security**: User passwords are securely stored on the local database using standard **bcrypt** hashing (`password_hash($password, PASSWORD_DEFAULT)`).
-*   **In-Browser Document Privacy**: PDF text extraction and parsing occur entirely in-memory within the client's browser. No document binary or parsed text is transmitted to external server APIs, ensuring compliance with data privacy policies.
-*   **Critical Parameter Binding Patches**:
-    *   `bids.php`: Remediated a parameter count mismatch where 14 type specifiers were declared for 13 bound variables.
-    *   `receipts.php`: Resolved scrambled type mappings (`'sssiiisssii'`) which bound string fields to integer parameters, preventing database write corruptions.
-    *   `invoices.php`: Corrected date parameter double-casting where date string fields were bound as doubles (`d`), causing dates to truncate to `2026-00-00`. They are now safely bound as string literals (`s`).
+- **SQL Injection Prevention** — All PHP REST APIs use MySQLi prepared statements with strictly bound literal parameters.
+- **Password Security** — Passwords stored using **bcrypt** hashing (`PASSWORD_DEFAULT`).
+- **In-Browser Document Privacy** — PDF extraction occurs entirely in-memory; no document binary or parsed text is transmitted to external APIs.
+- **Parameter Binding Patches**:
+  - `bids.php` — Remediated a parameter count mismatch (14 type specifiers for 13 variables).
+  - `receipts.php` — Resolved scrambled type mappings binding string fields to integer parameters.
+  - `invoices.php` — Corrected date parameter double-casting causing dates to truncate to `2026-00-00`.
 
 ---
 
 ## 📁 Repository Structure
 
-```directory
+```
 SRM_PROJECT/
-├── docs/                 # Consolidated project documentation
-│   ├── testing-guide.md         # 11-step end-to-end user testing guide
-│   ├── portal-workflow.md       # Business workflow & procurement lifecycle guide
-│   ├── pdf-parsing-logic.md     # Client-side PDF extraction & regex parsing details
-│   └── security-audit-report.md # SQLi prevention & parameter binding audit
+├── docs/                         # Consolidated project documentation
+│   ├── testing-guide.md          # 11-step end-to-end user testing guide
+│   ├── portal-workflow.md        # Business workflow & procurement lifecycle
+│   ├── pdf-parsing-logic.md      # Client-side PDF extraction & regex parsing
+│   └── security-audit-report.md  # SQLi prevention & parameter binding audit
 ├── src/
-│   ├── components/       # Reusable UI Blocks (Alert, Button, Modal, Sidebar, Navbar, StatCards)
-│   │   └── ui/           # Visual UI primitives (GridBackground, backgroundbeams, meteors, etc.)
-│   ├── layouts/          # Layout wrappers (AdminLayout, SupplierLayout, PublicLayout)
+│   ├── components/               # Reusable UI blocks (Alert, Modal, Sidebar, Navbar, StatCards)
+│   │   └── ui/                   # Visual primitives (GridBackground, BackgroundBeams, Meteors)
+│   ├── layouts/                  # Layout wrappers (AdminLayout, SupplierLayout, PublicLayout)
 │   ├── pages/
-│   │   ├── auth/         # LoginPage, RegisterPage, ForgotPassword, AnimatedAuthSVGs
-│   │   ├── admin/        # Dashboard, RFQManagement, BidComparison, SupplierManagement, Analytics, AuditLogs, RoleManagement, Settings
-│   │   └── supplier/     # Dashboard, MyBids, Profile, Products, RFQs, Reviews, Invoices, WorkspaceFeed, KpiPerformance
-│   ├── routes/           # Declarative React Router configurations (appRoutes.jsx)
-│   ├── utils/            # Data formatting, storage helpers, and pdfParser.js
-│   ├── main.jsx          # App entry point using HashRouter
-│   └── styles.css        # Tailwind config, glassmorphism tokens, and custom animation definitions
-├── backend/              # PHP REST API backend
-│   ├── api/              # API Endpoint handlers (login.php, register.php, bids.php, rfqs.php, etc.)
-│   ├── config/           # Database configurations (db.php)
-│   └── database/         # MySQL schema.sql and migrate.php scripts
+│   │   ├── auth/                 # LoginPage, RegisterPage, ForgotPassword
+│   │   ├── admin/                # Dashboard, RFQManagement, BidComparison, Analytics, AuditLogs
+│   │   └── supplier/             # Dashboard, MyBids, Products, RFQs, Invoices, KpiPerformance
+│   ├── routes/                   # React Router configuration (appRoutes.jsx)
+│   ├── utils/                    # Helpers, formatters, pdfParser.js
+│   ├── main.jsx                  # App entry point (HashRouter)
+│   └── styles.css                # Tailwind config, glassmorphism tokens, animations
+├── backend/
+│   ├── api/                      # PHP REST endpoints (login, register, bids, rfqs, etc.)
+│   ├── config/                   # Database configuration (db.php)
+│   └── database/                 # schema.sql & migrate.php
 ├── public/
-│   ├── images/           # High-resolution illustrations & screenshots
-│   └── samples/          # Test PDF specimens (rfq-procurement-spec.pdf, bid-quotation.pdf, etc.)
-├── Theme.jsx             # Original theme toggler
-├── tailwind.config.js    # Tailwind configuration with dark-mode overrides
-├── vite.config.js        # Vite build & proxy settings
-└── package.json          # Frontend packages & build scripts
+│   ├── images/                   # High-resolution screenshots & illustrations
+│   └── samples/                  # Test PDFs (rfq-procurement-spec.pdf, bid-quotation.pdf, etc.)
+├── tailwind.config.js            # Tailwind configuration with dark-mode overrides
+├── vite.config.js                # Vite build & proxy settings
+└── package.json                  # Dependencies & build scripts
 ```
 
 ---
 
-## 🛠️ Setup and Installation
+## 🛠️ Setup & Installation
 
-### 1. Database Setup (MySQL)
-1.  Open phpMyAdmin or MySQL CLI.
-2.  Import `SRM_PROJECT/backend/database/schema.sql` to create the database (`srm_portal`) and seed initial testing records.
-3.  If you have an existing database, navigate to `SRM_PROJECT/backend/database` and run migrations to ensure database tables are up-to-date:
-    ```bash
-    php migrate.php
-    ```
+### Prerequisites
 
-### 2. Configure Environment Files
-*   **Backend Database Config**: `backend/config/db.php` reads connection variables from environment variables: `DB_HOST` (default: `127.0.0.1`), `DB_USER` (default: `root`), `DB_PASS` (default: empty), and `DB_NAME` (default: `srm_portal`).
-*   **Frontend API Config**: Set the base API address inside `SRM_PROJECT/.env`:
-    ```env
-    VITE_API_BASE_URL=http://127.0.0.1/SUPPLIER-RELATIONSHIP-MANAGEMENT/SRM_PROJECT/backend/api
-    ```
+- [Node.js](https://nodejs.org/) ≥ 18
+- [PHP](https://www.php.net/) ≥ 8.0
+- [MySQL](https://www.mysql.com/) ≥ 8.0 (or MariaDB equivalent)
+- [XAMPP](https://www.apachefriends.org/) (recommended for local development)
+
+### 1. Database Setup
+
+Ensure MySQL/Apache is running (e.g., via XAMPP). Set up the database schema and apply all required migrations:
+
+```bash
+# Step A: Create the base database schema and seed initial tables
+mysql -u root < SRM_PROJECT/backend/database/schema.sql
+
+# Step B: Run all incremental migrations to update tables and seed mock supplier profiles/evaluations
+cd SRM_PROJECT/backend/database
+php migrate_all.php
+```
+
+This creates the `srm_portal` database, establishes InnoDB constraints, applies necessary columns for PO tracking/3-way matching, and seeds the 16 mock supplier partner accounts along with their default performance evaluations.
+
+### 2. Environment Configuration
+
+**Backend** — `backend/config/db.php` reads connection variables from the environment:
+
+| Variable | Default |
+| --- | --- |
+| `DB_HOST` | `127.0.0.1` |
+| `DB_USER` | `root` |
+| `DB_PASS` | *(empty)* |
+| `DB_NAME` | `srm_portal` |
+
+**Frontend** — Create or edit `SRM_PROJECT/.env`:
+
+```env
+VITE_API_BASE_URL=http://127.0.0.1/SUPPLIER-RELATIONSHIP-MANAGEMENT/SRM_PROJECT/backend/api
+```
 
 ### 3. Frontend Setup
-1.  Navigate into the `SRM_PROJECT` folder:
-    ```bash
-    cd SRM_PROJECT
-    ```
-2.  Install package dependencies:
-    ```bash
-    npm install
-    ```
-3.  Launch the Vite development server:
-    ```bash
-    npm run dev
-    ```
-4.  Open the URL shown in the terminal (typically **`http://localhost:5173`**).
+
+```bash
+cd SRM_PROJECT
+npm install
+npm run dev
+```
+
+Open the URL shown in the terminal (typically **http://localhost:5173**).
 
 ---
 
-## 🧪 Testing and Route Bypass Guides
+## 🌐 Production Deployment
+
+The portal is designed to be hosted on a decoupled, free-tier cloud architecture:
+
+### 1. Database: Aiven MySQL (Free Forever)
+* **Hosting Platform:** [Aiven.io](https://aiven.io/) (Free managed MySQL database, 5GB storage, no credit card required).
+* **Setup:** Create a free MySQL database on Aiven. Configure the environment variables on the Render backend to point to the Aiven instance host, password, database, and custom port.
+
+### 2. Backend API: PHP (Render Docker)
+* **Hosting Platform:** [Render Web Services](https://render.com/) (Free Tier Web Service running a custom Docker container).
+* **Settings:**
+  * **Language/Runtime:** `Docker` (compiles and runs using `SRM_PROJECT/backend/Dockerfile` which configures Apache + PHP 8.2 + `mysqli` extension).
+  * **Root Directory:** `SRM_PROJECT/backend`
+* **Environment Variables:** Define `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, and `DB_NAME` in the Render dashboard.
+
+### 3. Frontend Client: React (Vercel)
+* **Hosting Platform:** [Vercel](https://vercel.com/) (Free Static Site hosting).
+* **Settings:**
+  * **Root Directory:** `SRM_PROJECT`
+  * **Build Command:** `npm run build`
+  * **Output Directory:** `dist`
+  * **Environment Variable:** `VITE_API_BASE_URL` = `https://your-render-backend-url.onrender.com/api`
+
+---
+
+## 🧪 Testing & Route Bypass Guides
 
 ### Default Test Accounts
-Use these pre-seeded credentials to sign into the portal:
-*   **Admin Console Role**:
-    *   *Email*: `admin@srm.local`
-    *   *Password*: `password123`
-*   **Supplier Partner Workspace Role**:
-    *   *Email*: `supplier@srm.local`
-    *   *Password*: `password123`
 
-### Development Hash-Routes (Bypassing Login)
-For quick styling inspection and manual validation, you can bypass the authentication gates using direct hash routes:
-*   **Admin Dashboard**: [http://127.0.0.1:5173/#/admin](http://127.0.0.1:5173/#/admin)
-*   **Spend Analytics**: [http://127.0.0.1:5173/#/admin/analytics](http://127.0.0.1:5173/#/admin/analytics)
-*   **Audit Logs**: [http://127.0.0.1:5173/#/admin/audit-logs](http://127.0.0.1:5173/#/admin/audit-logs)
-*   **Supplier Dashboard**: [http://127.0.0.1:5173/#/supplier](http://127.0.0.1:5173/#/supplier)
-*   **Sourcing RFQ Inbox**: [http://127.0.0.1:5173/#/supplier/rfqs](http://127.0.0.1:5173/#/supplier/rfqs)
-*   **KPI & Performance Scores**: [http://127.0.0.1:5173/#/supplier/performance](http://127.0.0.1:5173/#/supplier/performance)
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin@srm.local` | `password123` |
+| Supplier | `supplier@srm.local` | `password123` |
+
+### Development Hash Routes (Bypass Login)
+
+For quick UI inspection and manual validation, navigate directly to any of these routes:
+
+| Page | URL |
+| --- | --- |
+| Admin Dashboard | `http://localhost:5173/#/admin` |
+| Spend Analytics | `http://localhost:5173/#/admin/analytics` |
+| Audit Logs | `http://localhost:5173/#/admin/audit-logs` |
+| Supplier Dashboard | `http://localhost:5173/#/supplier` |
+| RFQ Sourcing Inbox | `http://localhost:5173/#/supplier/rfqs` |
+| KPI & Performance | `http://localhost:5173/#/supplier/performance` |
 
 ---
 
-## 📝 11-Step End-to-End User Testing Flow
+## 📝 10-Stage Consolidated Sourcing & Billing Flow
 
-Follow these steps sequentially to test the full automated Procurement Lifecycle. For complete instructions, refer to the [Step-by-Step User Testing Guide](SRM_PROJECT/docs/testing-guide.md).
+Follow these steps sequentially to exercise the full automated Procurement Lifecycle. For complete instructions, see the [Step-by-Step Testing Guide](SRM_PROJECT/docs/testing-guide.md).
 
-1.  **Sourcing Demand**: Identify a distribution need.
-2.  **Create RFQ (Admin)**: Upload `rfq-procurement-spec.pdf` under Admin RFQs to auto-populate title, category, and deadline. Save RFQ.
-3.  **Receive RFQ Invitation (Supplier)**: Log in as a supplier, open RFQ Sourcing Inbox, and select the newly created RFQ.
-4.  **Submit Bid (Supplier)**: In the My Bids modal, upload `bid-quotation.pdf` to parse total bid price, warranty, and delivery speed. Verify the emerald success animation.
-5.  **Evaluate Bids (Admin)**: Toggle to Admin Console -> Bid Management. Select the target RFQ in the dynamic scope dropdown to compare bids.
-6.  **Issue PO (Admin)**: Award contract to the winning supplier bid to issue a Purchase Order.
-7.  **Deliver Goods (Supplier)**: Simulates shipping physical goods to the corporate warehouse.
-8.  **Goods Receipt GRN (Admin)**: Go to Receipts & Reviews -> Record Goods Receipt. Upload `delivery-receipt.pdf` to parse and auto-populate the line-item grid. Confirm delivered and accepted counts.
-9.  **Submit Invoice (Supplier)**: In Supplier Workspace -> Invoices, upload `supplier-invoice.pdf` to parse Invoice ID, PO reference, and total amount.
-10. **3-Way Match & Approval (Admin)**: Open Admin -> Invoices & Billing. Select the invoice, verify match details, and click Approve & Record Payment.
-11. **Verify Compliance Documents**: Under Supplier Workspace -> Profile, upload `iso-compliance-certificate.pdf` to parse ISO details and expiry dates. Verify profile saving animation.
+| Stage | Actor | Action |
+| :---: | --- | --- |
+| 1 | Supplier | **Registration & Catalog** — Manage unique SKU catalogs under Partner Workspace. |
+| 2 | Admin | **Create RFQ** — Auto-populate sourcing details by parsing `rfq-procurement-spec.pdf`. |
+| 3 | Supplier | **Submit Bid** — Respond to RFQ invitations and submit quote proposals. |
+| 4 | Both | **Evaluate & Negotiate** — Compare competing quotes; enter the Negotiation Room for counter-offers. |
+| 5 | Admin | **Issue Purchase Order** — Award the contract to generate a legally binding PO. |
+| 6 | Admin | **Goods Receipt (GRN)** — Log deliveries using `delivery-receipt.pdf` to record accepted quantities. |
+| 7 | Supplier | **Invoice Submission** — Upload `supplier-invoice.pdf` to record invoice details. |
+| 8 | Admin | **3-Way Match** — Run automated PO vs. GRN vs. Invoice verification. |
+| 9 | Admin | **Payment Processing** — Approve matching invoices and transition to `Paid`. |
+| 10 | Both | **Compliance & Audit** — Maintain certifications and review operational audit trails. |
+
+---
+
+## 🔧 Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| **Frontend Framework** | React 18 + Vite |
+| **Styling** | Tailwind CSS 3, custom glassmorphism tokens |
+| **Animations** | Framer Motion |
+| **Charting** | Recharts |
+| **PDF Parsing** | pdf.js (CDN, client-side) |
+| **Backend** | PHP 8 (REST API) |
+| **Database** | MySQL 8 / MariaDB |
+| **Auth** | bcrypt hashing, session-per-tab isolation |
+| **Dev Environment** | XAMPP, Node.js |
+
+---
+
+## 📚 Documentation
+
+All project documentation is consolidated under [`SRM_PROJECT/docs/`](SRM_PROJECT/docs/):
+
+| Document | Description |
+| --- | --- |
+| [testing-guide.md](SRM_PROJECT/docs/testing-guide.md) | 11-step end-to-end user testing walkthrough |
+| [portal-workflow.md](SRM_PROJECT/docs/portal-workflow.md) | Business workflow & procurement lifecycle guide |
+| [pdf-parsing-logic.md](SRM_PROJECT/docs/pdf-parsing-logic.md) | Client-side PDF extraction & regex parsing details |
+| [security-audit-report.md](SRM_PROJECT/docs/security-audit-report.md) | SQL injection prevention & parameter binding audit |
 
 ---
 
 ## 📝 License
+
 This project is proprietary study/internship source material. All rights reserved.
+
+---
+
+<div align="center">
+  <sub>Built with ❤️ using React, Vite, Tailwind CSS, Framer Motion, PHP & MySQL</sub>
+</div>

@@ -47,7 +47,8 @@ function ot_po_status_for_tracking(string $trackingStatus): string
     return match ($trackingStatus) {
         'SUPPLIER_ACCEPTED', 'PRODUCTION_STARTED', 'PACKED' => 'pending',
         'DISPATCHED', 'IN_TRANSIT' => 'shipped',
-        'DELIVERED', 'GRN_GENERATED', 'INVOICE_SUBMITTED' => 'delivered',
+        'DELIVERED' => 'awaiting_receipt',
+        'GRN_GENERATED', 'INVOICE_SUBMITTED' => 'grn_recorded',
         'PAYMENT_COMPLETED' => 'fulfilled',
         default => 'issued',
     };

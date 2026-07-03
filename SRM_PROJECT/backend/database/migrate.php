@@ -42,5 +42,41 @@ if ($result->num_rows === 0) {
     echo "supplier_name column already exists.\n";
 }
 
+// Check if quantity column exists in invoices table
+$result = $connection->query("SHOW COLUMNS FROM invoices LIKE 'quantity'");
+if ($result->num_rows === 0) {
+    if ($connection->query("ALTER TABLE invoices ADD COLUMN quantity INT UNSIGNED DEFAULT 0")) {
+        echo "Successfully added quantity column to invoices table.\n";
+    } else {
+        echo "Failed to add quantity column: " . $connection->error . "\n";
+    }
+} else {
+    echo "quantity column already exists in invoices table.\n";
+}
+
+// Check if generated_from_po_id column exists in invoices table
+$result = $connection->query("SHOW COLUMNS FROM invoices LIKE 'generated_from_po_id'");
+if ($result->num_rows === 0) {
+    if ($connection->query("ALTER TABLE invoices ADD COLUMN generated_from_po_id INT DEFAULT NULL")) {
+        echo "Successfully added generated_from_po_id column to invoices table.\n";
+    } else {
+        echo "Failed to add generated_from_po_id column: " . $connection->error . "\n";
+    }
+} else {
+    echo "generated_from_po_id column already exists.\n";
+}
+
+// Check if generated_from_grn_id column exists in invoices table
+$result = $connection->query("SHOW COLUMNS FROM invoices LIKE 'generated_from_grn_id'");
+if ($result->num_rows === 0) {
+    if ($connection->query("ALTER TABLE invoices ADD COLUMN generated_from_grn_id VARCHAR(50) DEFAULT NULL")) {
+        echo "Successfully added generated_from_grn_id column to invoices table.\n";
+    } else {
+        echo "Failed to add generated_from_grn_id column: " . $connection->error . "\n";
+    }
+} else {
+    echo "generated_from_grn_id column already exists.\n";
+}
+
 echo "Migration finished.\n";
 ?>

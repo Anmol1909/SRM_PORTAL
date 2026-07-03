@@ -5,11 +5,14 @@ import { PageHeader } from '../../components/PageHeader.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { currency } from '../../utils/formatters.js';
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CustomNotification } from '../../components/CustomNotification.jsx';
 
 export function BidComparison() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const rfqQueryId = searchParams.get('rfqId');
+
   const [rfqList, setRfqList] = useState([]);
   const [customAlert, setCustomAlert] = useState({
     isOpen: false,
@@ -18,7 +21,7 @@ export function BidComparison() {
     message: '',
     onConfirm: null
   });
-  const [selectedRfqId, setSelectedRfqId] = useState('RFQ-24061');
+  const [selectedRfqId, setSelectedRfqId] = useState('');
   const [allBids, setAllBids] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRfqDetails, setSelectedRfqDetails] = useState(null);
@@ -26,7 +29,8 @@ export function BidComparison() {
   const [awardingBid, setAwardingBid] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1/SUPPLIER-RELATIONSHIP-MANAGEMENT/SRM_PROJECT/backend/api').replace(/\/$/, '');
+
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1/SUPPLIER-RELATIONSHIP-MANAGEMENT-main/SRM_PROJECT/backend/api').replace(/\/$/, '');
 
   const handleConfirmAward = () => {
     if (!awardingBid) return;
@@ -87,8 +91,12 @@ export function BidComparison() {
         if (data.success && Array.isArray(data.rfqs)) {
           setRfqList(data.rfqs);
           if (data.rfqs.length > 0) {
-            const activeRfq = data.rfqs.find(r => r.status === 'Active' || r.status === 'Under Evaluation');
-            setSelectedRfqId(activeRfq ? activeRfq.id : data.rfqs[0].id);
+            if (rfqQueryId) {
+              setSelectedRfqId(rfqQueryId);
+            } else {
+              const activeRfq = data.rfqs.find(r => r.status === 'Active' || r.status === 'Under Evaluation');
+              setSelectedRfqId(activeRfq ? activeRfq.id : data.rfqs[0].id);
+            }
           }
         }
       })
@@ -104,7 +112,7 @@ export function BidComparison() {
       })
       .catch((err) => console.error('Failed to fetch Bids:', err))
       .finally(() => setLoading(false));
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, rfqQueryId]);
 
   useEffect(() => {
     if (selectedRfqId) {
@@ -271,16 +279,16 @@ export function BidComparison() {
   }
 
   return (
-    <>
+    <div className="flex flex-col h-[calc(100vh-8.5rem)] min-h-0 overflow-hidden space-y-4">
       <PageHeader 
         title="Bid Comparison" 
         description="Compare quotations by price, timeline, rating, warranty, and weighted evaluation score." 
         action={
           rfqList.length > 0 && (
-            <div className="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 shadow-sm min-w-[280px]">
+            <div className="flex items-center gap-3 bg-white dark:bg-slate-900/85 border border-slate-200 dark:border-slate-800/80 rounded-xl px-4 py-2 shadow-sm min-w-[280px]">
               <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider shrink-0">RFQ Scope:</span>
               <select 
-                className="flex-1 bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 border-none outline-none focus:ring-0 cursor-pointer"
+                className="flex-1 bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 border-none outline-none focus:ring-0 cursor-pointer h-9"
                 value={selectedRfqId}
                 onChange={(e) => setSelectedRfqId(e.target.value)}
               >
@@ -294,17 +302,69 @@ export function BidComparison() {
           )
         }
       />
-      <Card>
-        <CardHeader 
-          title={`${selectedRfqId} Bid Matrix`} 
-          subtitle={selectedRfq ? selectedRfq.title : "Best quotation is highlighted for award review"} 
-        />
-        <DataTable
-          data={filteredBids}
-          empty="No supplier quotations have been submitted yet for this RFQ."
-          columns={comparisonColumns}
-        />
-      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0 overflow-hidden">
+        {/* Bid Comparison Bento Box */}
+        <Card className="lg:col-span-3 flex flex-col h-full min-h-0 overflow-hidden">
+          <CardHeader 
+            title={`${selectedRfqId} Bid Matrix`} 
+            subtitle={selectedRfq ? selectedRfq.title : "Best quotation is highlighted for award review"} 
+          />
+          <div className="flex-1 overflow-auto custom-scrollbar min-h-0">
+            <DataTable
+              data={filteredBids}
+              empty="No supplier quotations have been submitted yet for this RFQ."
+              columns={comparisonColumns}
+            />
+          </div>
+        </Card>
+
+        {/* Side Panel Bento boxes */}
+        <div className="flex flex-col gap-6 h-full overflow-y-auto custom-scrollbar pr-1">
+          {/* RFQ Details Card */}
+          <Card className="p-5 flex flex-col shrink-0">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">RFQ Sourcing Scope</h3>
+            {selectedRfqDetails ? (
+              <div className="space-y-3 text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Title</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-250 leading-relaxed block">{selectedRfqDetails.title}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Category</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5 block">{selectedRfqDetails.category}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Deadline</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5 block">{selectedRfqDetails.deadline}</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Target Value</span>
+                    <span className="font-bold text-brand-600 dark:text-brand-400 mt-0.5 block">{currency(selectedRfqDetails.value || 0)}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Quotes Received</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">{filteredBids.length} proposals</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <span className="text-xs text-slate-400 italic">No RFQ details loaded.</span>
+            )}
+          </Card>
+
+          {/* Quick Guidelines Card */}
+          <Card className="p-5 flex flex-col shrink-0">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-2">Award Guidance</h3>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
+              Compare bidder metrics including unit pricing, delivery schedules, and system scorecards. Clicking "Award" issues the binding Purchase Order automatically.
+            </p>
+          </Card>
+        </div>
+      </div>
 
       {showConfirmModal && awardingBid && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -342,7 +402,7 @@ export function BidComparison() {
               <div>
                 <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 block mb-1">CONTRACT LEGAL TERMS & CONDITIONS</span>
                 <div className="h-44 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-3 text-[10px] leading-5 font-mono text-slate-600 dark:text-slate-300">
-                  {`PURCHASE ORDER AGREEMENT — TATA MOTORS LTD
+                  {`PURCHASE ORDER AGREEMENT — NEXUS MANUFACTURING LTD
 
 PO Number      : PO-${new Date().getFullYear()}-XXXX
 Issued Date    : ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -352,12 +412,12 @@ Delivery By    : (Quoted Lead Time: ${awardingBid.delivery})
 Total Value    : INR ${Number(awardingBid.grand_total || awardingBid.price).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
 
 TERMS & CONDITIONS:
-1. This Purchase Order constitutes a legally binding procurement contract issued by Tata Motors Ltd.
+1. This Purchase Order constitutes a legally binding procurement contract issued by Nexus Manufacturing Ltd.
 2. The Supplier agrees to deliver all items specified herein in full, on or before the delivery date.
 3. Payment Terms: Net 30 days upon delivery and submission of a valid GST tax invoice.
 4. Any deviation in quantity, specifications, or delivery schedule requires prior written approval.
 5. Goods not conforming to specifications will be rejected at the Supplier's expense.
-6. Tata Motors reserves the right to cancel this PO with written notice of 7 business days.
+6. Nexus Manufacturing reserves the right to cancel this PO with written notice of 7 business days.
 7. Governing Law: Laws of India. Jurisdiction: Jharkhand High Court.
 
 This Purchase Order is issued electronically and is legally valid without physical signature.`}
@@ -397,6 +457,6 @@ This Purchase Order is issued electronically and is legally valid without physic
         title={customAlert.title}
         message={customAlert.message}
       />
-    </>
+    </div>
   );
 }

@@ -24,43 +24,22 @@ import { DashboardLayout } from './DashboardLayout.jsx';
 const adminItems = [
   { label: 'Dashboard', to: '/admin', icon: LayoutDashboard, end: true },
   {
-    section: 'Sourcing',
+    section: 'Procurement Flow',
     items: [
-      { label: 'RFQs', to: '/admin/rfqs', icon: FileText },
-      { label: 'Bid Management', to: '/admin/bids', icon: GitCompare },
-      { label: 'Suppliers', to: '/admin/suppliers', icon: Users },
-      { label: 'Supplier Rankings', to: '/admin/supplier-rankings', icon: Award },
+      { label: '1. RFQs (Sourcing)', to: '/admin/rfqs', icon: FileText },
+      { label: '2. Bid Matrix', to: '/admin/bids', icon: GitCompare },
+      { label: '3. Purchase Orders', to: '/admin/orders', icon: ShoppingCart },
+      { label: '4. Receipts & Reviews', to: '/admin/receipts-reviews', icon: PackageOpen },
+      { label: '5. Invoices & Billing', to: '/admin/invoices', icon: ReceiptText },
     ],
   },
   {
-    section: 'Procurement',
+    section: 'Management',
     items: [
-      { label: 'Product Management', to: '/admin/products', icon: Package },
-      { label: 'Purchase Orders', to: '/admin/orders', icon: ShoppingCart },
-      { label: 'Order Tracker', to: '/admin/order-tracker', icon: ClipboardList },
-      { label: 'Receipts & Reviews', to: '/admin/receipts-reviews', icon: PackageOpen },
-      { label: 'Invoices & Billing', to: '/admin/invoices', icon: ReceiptText },
-    ],
-  },
-  {
-    section: 'Analytics',
-    items: [
-      { label: 'Spend Analytics', to: '/admin/analytics', icon: PieChart },
-      { label: 'Reports', to: '/admin/reports', icon: BarChart3 },
-    ],
-  },
-  {
-    section: 'Governance',
-    items: [
+      { label: 'Supplier Hub', to: '/admin/suppliers', icon: Users },
       { label: 'Notifications', to: '/admin/notifications', icon: Bell },
-      { label: 'Audit Logs', to: '/admin/audit-logs', icon: ShieldCheck },
-      { label: 'User & Role Management', to: '/admin/roles', icon: UserCog },
-      { label: 'System Settings', to: '/admin/settings', icon: Settings },
+      { label: 'Audit Logs', to: '/admin/audit-logs', icon: ScrollText },
     ],
-  },
-  {
-    section: 'Profile',
-    items: [{ label: 'Profile', to: '/admin/profile', icon: ListChecks }],
   },
 ];
 
@@ -78,3 +57,4 @@ export function AdminLayout() {
     </DashboardLayout>
   );
 }
+

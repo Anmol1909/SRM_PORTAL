@@ -217,6 +217,9 @@ CREATE TABLE IF NOT EXISTS invoices (
   supplier_id INT DEFAULT NULL,
   invoice_number VARCHAR(100) DEFAULT NULL UNIQUE,
   tax_amount DECIMAL(10, 2) DEFAULT 0.00,
+  quantity INT UNSIGNED DEFAULT 0,
+  generated_from_po_id INT DEFAULT NULL,
+  generated_from_grn_id VARCHAR(50) DEFAULT NULL,
   FOREIGN KEY (po_id) REFERENCES purchase_orders(po_id) ON DELETE SET NULL,
   FOREIGN KEY (supplier_id) REFERENCES suppliers(supplier_id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -367,12 +370,12 @@ VALUES
 ON DUPLICATE KEY UPDATE receipt = VALUES(receipt);
 
 -- Seed Initial Invoices
-INSERT INTO invoices (id, po, amount, submitted, due, status)
+INSERT INTO invoices (id, po, amount, submitted, due, status, quantity)
 VALUES
-  ('INV-5401', 'PO-88021', 218000.00, '2026-05-20', '2026-06-04', 'Submitted'),
-  ('INV-5402', 'PO-88022', 650000.00, '2026-05-22', '2026-06-06', 'Approved'),
-  ('INV-5403', 'PO-88023', 92000.00, '2026-05-24', '2026-06-08', 'Pending'),
-  ('INV-5398', 'PO-87991', 184000.00, '2026-04-22', '2026-05-07', 'Paid')
+  ('INV-5401', 'PO-88021', 218000.00, '2026-05-20', '2026-06-04', 'Submitted', 2500),
+  ('INV-5402', 'PO-88022', 650000.00, '2026-05-22', '2026-06-06', 'Approved', 800),
+  ('INV-5403', 'PO-88023', 92000.00, '2026-05-24', '2026-06-08', 'Under Review', 1200),
+  ('INV-5398', 'PO-87991', 184000.00, '2026-04-22', '2026-05-07', 'Paid', 1500)
 ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- Seed Initial Compliance Documents

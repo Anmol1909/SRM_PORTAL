@@ -89,7 +89,7 @@ addColumnIfNeeded($connection, 'supplier_quotes', 'status', "ENUM('submitted','u
 addColumnIfNeeded($connection, 'bids', 'status', "ENUM('submitted','under_review','awarded','rejected') DEFAULT 'submitted'");
 
 // 5. Modify purchase_orders status ENUM values
-$connection->query("ALTER TABLE purchase_orders MODIFY COLUMN status ENUM('issued', 'pending', 'shipped', 'delivered', 'fulfilled', 'cancelled') DEFAULT 'issued'");
+$connection->query("ALTER TABLE purchase_orders MODIFY COLUMN status ENUM('issued', 'pending', 'shipped', 'delivered', 'fulfilled', 'cancelled', 'awaiting_receipt', 'grn_recorded') DEFAULT 'issued'");
 echo "Updated purchase_orders status ENUM values.\n";
 
 echo "PO migration completed.\n";

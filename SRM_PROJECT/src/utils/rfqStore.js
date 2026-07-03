@@ -1,8 +1,7 @@
 import { rfqs as seedRfqs } from '../data/mockData.js';
 
 const RFQ_STORAGE_KEY = 'srm.rfqs';
-const RFQ_DELETED_STORAGE_KEY = 'srm.rfqs.deleted';
-export const RFQ_EVENT = 'srm:rfqs-changed';
+export const RFQ_EVENT = 'srm_rfqs_updated';
 
 function canUseStorage() {
   return typeof window !== 'undefined' && window.localStorage;
@@ -19,48 +18,10 @@ export function getStoredRfqs() {
   }
 }
 
-export function getDeletedRfqIds() {
-  if (!canUseStorage()) return [];
-
-  try {
-    const stored = window.localStorage.getItem(RFQ_DELETED_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
-
 export function saveStoredRfqs(rfqs) {
   if (!canUseStorage()) return;
   window.localStorage.setItem(RFQ_STORAGE_KEY, JSON.stringify(rfqs));
-  window.dispatchEvent(new CustomEvent(RFQ_EVENT));
-}
-
-export function mergeRfqLists(remoteRfqs = [], localRfqs = getStoredRfqs()) {
-  const deletedIds = new Set(getDeletedRfqIds());
-  const merged = new Map();
-
-  remoteRfqs
-    .filter((rfq) => !deletedIds.has(rfq.id))
-    .forEach((rfq) => merged.set(rfq.id, rfq));
-
-  localRfqs
-    .filter((rfq) => !deletedIds.has(rfq.id))
-    .forEach((rfq) => merged.set(rfq.id, { ...merged.get(rfq.id), ...rfq }));
-
-  return Array.from(merged.values()).sort((a, b) => {
-    const aTime = Number(a.localUpdatedAt || Date.parse(a.created_at || a.deadline || '') || 0);
-    const bTime = Number(b.localUpdatedAt || Date.parse(b.created_at || b.deadline || '') || 0);
-    return bTime - aTime;
-  });
-}
-
-export function rememberDeletedRfq(id) {
-  if (!canUseStorage()) return;
-  const deletedIds = new Set(getDeletedRfqIds());
-  deletedIds.add(id);
-  window.localStorage.setItem(RFQ_DELETED_STORAGE_KEY, JSON.stringify(Array.from(deletedIds)));
-  saveStoredRfqs(getStoredRfqs().filter((rfq) => rfq.id !== id));
+  window.dispatchEvent(new Event(RFQ_EVENT));
 }
 
 export function createRfqId(rfqs) {
@@ -70,4 +31,20 @@ export function createRfqId(rfqs) {
   }, 24000);
 
   return `RFQ-${maxNumber + 1}`;
+}
+
+export function mergeRfqLists(apiRfqs) {
+  const localRfqs = getStoredRfqs();
+  const merged = [...localRfqs];
+
+  (apiRfqs || []).forEach((apiRfq) => {
+    const index = merged.findIndex((r) => r.id === apiRfq.id);
+    if (index === -1) {
+      merged.push(apiRfq);
+    } else {
+      merged[index] = { ...merged[index], ...apiRfq };
+    }
+  });
+
+  return merged;
 }

@@ -42,6 +42,9 @@ if ($method === 'POST') {
     $received = isset($input['received']) ? (int)$input['received'] : 0;
     $accepted = isset($input['accepted']) ? (int)$input['accepted'] : 0;
     $status = isset($input['status']) ? trim((string)$input['status']) : 'Approved';
+    $damaged = isset($input['damaged_items']) ? (int)$input['damaged_items'] : 0;
+    $remarks = isset($input['remarks']) ? trim((string)$input['remarks']) : '';
+    $po_id = isset($input['po_id']) && (int)$input['po_id'] > 0 ? (int)$input['po_id'] : null;
 
     if ($receipt === '' || $po === '') {
         http_response_code(422);
@@ -52,8 +55,17 @@ if ($method === 'POST') {
         exit;
     }
 
-    $stmt = $connection->prepare('INSERT INTO goods_receipts (receipt, po, item, received, accepted, status) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE po=?, item=?, received=?, accepted=?, status=?');
-    $stmt->bind_param('sssiisssiis', $receipt, $po, $item, $received, $accepted, $status, $po, $item, $received, $accepted, $status);
+    $stmt = $connection->prepare('
+        INSERT INTO goods_receipts (receipt, po, item, received, accepted, status, damaged_items, remarks, po_id) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) 
+        ON DUPLICATE KEY UPDATE po=?, item=?, received=?, accepted=?, status=?, damaged_items=?, remarks=?, po_id=?
+    ');
+    $types = 'sssiisisi' . 'sssiisii';
+    $stmt->bind_param(
+        $types,
+        $receipt, $po, $item, $received, $accepted, $status, $damaged, $remarks, $po_id,
+        $po, $item, $received, $accepted, $status, $damaged, $remarks, $po_id
+    );
 
     if ($stmt->execute()) {
         echo json_encode([

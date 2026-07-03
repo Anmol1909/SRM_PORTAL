@@ -19,11 +19,18 @@ const styles = {
   Low: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
   Medium: 'bg-amber-50 text-amber-700 ring-amber-600/20',
   High: 'bg-rose-50 text-rose-700 ring-rose-600/20',
+  'Risk Supplier': 'bg-rose-50 text-rose-700 ring-rose-600/20',
+  Risk: 'bg-rose-50 text-rose-700 ring-rose-600/20',
+  Watchlist: 'bg-amber-50 text-amber-700 ring-amber-600/20',
   // New Proposal & Negotiation statuses
   Submitted: 'bg-blue-50 text-blue-700 ring-blue-600/20',
   submitted: 'bg-blue-50 text-blue-700 ring-blue-600/20',
   'Under Review': 'bg-amber-50 text-amber-700 ring-amber-600/20',
   under_review: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+  Paid: 'bg-violet-50 text-violet-700 ring-violet-600/20',
+  paid: 'bg-violet-50 text-violet-700 ring-violet-600/20',
+  'Payment Processing': 'bg-cyan-50 text-cyan-700 ring-cyan-600/20',
+  payment_processing: 'bg-cyan-50 text-cyan-700 ring-cyan-600/20',
   Awarded: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
   awarded: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
   Rejected: 'bg-rose-50 text-rose-700 ring-rose-600/20',
@@ -58,6 +65,8 @@ const styles = {
   shipped: 'bg-amber-50 text-amber-700 ring-amber-600/20',
   fulfilled: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
   cancelled: 'bg-rose-50 text-rose-700 ring-rose-600/20',
+  awaiting_receipt: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+  grn_recorded: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
   'PO generated': 'bg-slate-100 text-slate-700 ring-slate-600/20',
   'Order confirmed': 'bg-cyan-50 text-cyan-700 ring-cyan-600/20',
   Processing: 'bg-blue-50 text-blue-700 ring-blue-600/20',
@@ -72,6 +81,8 @@ const styles = {
 
 function formatStatusLabel(status) {
   if (!status) return 'Unknown';
+  if (status === 'awaiting_receipt') return 'Awaiting Receipt Verification';
+  if (status === 'grn_recorded') return 'Receipt Verified';
   if (String(status).includes('_')) {
     return String(status)
       .replace(/_/g, ' ')

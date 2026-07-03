@@ -159,11 +159,7 @@ export function LandingPage() {
       <footer className="mt-12 border-t border-slate-200 bg-white py-6 dark:border-slate-800 dark:bg-slate-950/60">
         <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400 sm:px-6 lg:px-8">
           <p>&copy; 2026 SRM Relationship Portal. All rights reserved.</p>
-          <div className="flex gap-4">
-            <Link to="/privacy" className="font-semibold text-slate-600 hover:text-brand-600 dark:text-slate-300 dark:hover:text-brand-500 underline decoration-dotted">
-              Privacy Policy & Data Registry
-            </Link>
-          </div>
+
         </div>
       </footer>
     </main>

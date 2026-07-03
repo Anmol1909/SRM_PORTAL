@@ -1,120 +1,84 @@
-const STORAGE_KEY = 'srm_notifications';
-export const NOTIFICATION_EVENT = 'srm:notifications-changed';
+export const NOTIFICATION_EVENT = 'srm_notifications_updated';
 
-export const notificationTypeStyles = {
-  'Action Required': 'bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-950/30 dark:text-rose-300 dark:ring-rose-500/30',
-  Alert: 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-950/30 dark:text-amber-300 dark:ring-amber-500/30',
-  Business: 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-950/30 dark:text-blue-300 dark:ring-blue-500/30',
-  System: 'bg-slate-100 text-slate-700 ring-slate-600/20 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-500/30',
+// Role-specific storage keys
+const KEYS = {
+  admin: 'srm_notifications_admin',
+  supplier: 'srm_notifications_supplier',
 };
 
-const seedNotifications = [
-  {
-    id: 'seed-rfq-24061',
-    category: 'sourcing',
-    icon: 'file',
-    title: 'New RFQ invitation: Precision CNC Aluminum Housings',
-    body: 'You have been invited to submit a bid. Deadline: Jun 10, 2026.',
-    time: '12 min ago',
-    createdAt: Date.now() - 12 * 60 * 1000,
-    read: false,
-    type: 'Business',
-    link: '/supplier/rfqs',
-  },
-  {
-    id: 'seed-po-88021',
-    category: 'orders',
-    icon: 'cart',
-    title: 'PO-88021 shipment document requested',
-    body: 'Apex Industrial Components requires your shipping documentation by Jun 3.',
-    time: '1 hr ago',
-    createdAt: Date.now() - 60 * 60 * 1000,
-    read: false,
-    type: 'Action Required',
-    link: '/supplier/orders',
-  },
-  {
-    id: 'seed-scorecard',
-    category: 'performance',
-    icon: 'star',
-    title: 'Quarterly scorecard available for review',
-    body: 'Your Q1 2026 performance scorecard has been published.',
-    time: '5 hr ago',
-    createdAt: Date.now() - 5 * 60 * 60 * 1000,
-    read: false,
-    type: 'Business',
-    link: '/supplier/performance',
-  },
-  {
-    id: 'seed-maintenance',
-    category: 'system',
-    icon: 'info',
-    title: 'System maintenance scheduled',
-    body: 'The SRM portal will be under maintenance on Jun 1, 2026 from 2-4 AM IST.',
-    time: '2 days ago',
-    createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
-    read: true,
-    type: 'System',
-    link: '/supplier/notifications',
-  },
-];
-
-function broadcast() {
-  window.dispatchEvent(new CustomEvent(NOTIFICATION_EVENT));
+function getKey(role) {
+  return KEYS[role] || KEYS.admin;
 }
 
-function normalize(notification) {
-  const createdAt = notification.createdAt || Date.now();
-
-  return {
-    id: notification.id || `notif-${createdAt}-${Math.random().toString(36).slice(2, 8)}`,
-    category: notification.category || 'system',
-    icon: notification.icon || 'bell',
-    title: notification.title || 'New notification',
-    body: notification.body || '',
-    time: notification.time || 'Just now',
-    createdAt,
-    read: Boolean(notification.read),
-    type: notification.type || 'Business',
-    link: notification.link || '/supplier/notifications',
-  };
-}
-
-export function getNotifications() {
+/** Get the current session user's role */
+function getSessionRole() {
   try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-    if (Array.isArray(stored)) {
-      return stored.map(normalize).sort((a, b) => b.createdAt - a.createdAt);
-    }
+    const user = JSON.parse(sessionStorage.getItem('srm_user') || '{}');
+    return user?.role || 'admin';
   } catch {
-    localStorage.removeItem(STORAGE_KEY);
+    return 'admin';
   }
-
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(seedNotifications));
-  return seedNotifications;
 }
 
-export function saveNotifications(notifications) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications.map(normalize)));
-  broadcast();
+/** Read notifications for a specific role (defaults to current session role) */
+export function getNotifications(role) {
+  if (typeof window === 'undefined' || !window.localStorage) return [];
+  const key = getKey(role || getSessionRole());
+  try {
+    const saved = window.localStorage.getItem(key);
+    return saved ? JSON.parse(saved).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
 }
 
-export function addNotification(notification) {
-  const next = [normalize(notification), ...getNotifications()];
-  saveNotifications(next);
-  return next;
+/** Save notifications for a specific role */
+export function saveNotifications(list, role) {
+  const key = getKey(role || getSessionRole());
+  try {
+    localStorage.setItem(key, JSON.stringify(list));
+    window.dispatchEvent(new Event(NOTIFICATION_EVENT));
+  } catch {}
 }
 
-export function markNotificationRead(id) {
-  const next = getNotifications().map((notification) =>
-    notification.id === id ? { ...notification, read: true } : notification,
+/**
+ * Push a notification to the TARGET role's inbox.
+ * i.e. when admin does something → push to 'supplier', and vice versa.
+ *
+ * @param {object} notif  - notification object (id, title, body, icon, iconColor, type, category)
+ * @param {string} targetRole - 'admin' | 'supplier'  (who should RECEIVE it)
+ */
+export function pushNotification(notif, targetRole) {
+  const existing = getNotifications(targetRole);
+  const full = {
+    id: notif.id ?? Date.now(),
+    time: notif.time || 'Just now',
+    read: false,
+    is_read: false,
+    ...notif,
+  };
+  saveNotifications([full, ...existing], targetRole);
+}
+
+/** Mark all notifications as read for the current session user */
+export function markAllRead(role) {
+  const r = role || getSessionRole();
+  const list = getNotifications(r).map((n) => ({ ...n, read: true, is_read: true }));
+  saveNotifications(list, r);
+}
+
+/** Mark one notification as read */
+export function markRead(id, role) {
+  const r = role || getSessionRole();
+  const list = getNotifications(r).map((n) =>
+    n.id === id ? { ...n, read: true, is_read: true } : n
   );
-  saveNotifications(next);
-  return next;
+  saveNotifications(list, r);
 }
 
-export function markAllNotificationsRead() {
-  const next = getNotifications().map((notification) => ({ ...notification, read: true }));
-  saveNotifications(next);
-  return next;
+/** Delete one notification */
+export function deleteNotification(id, role) {
+  const r = role || getSessionRole();
+  const list = getNotifications(r).filter((n) => n.id !== id);
+  saveNotifications(list, r);
 }

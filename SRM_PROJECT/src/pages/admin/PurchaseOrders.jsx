@@ -6,7 +6,7 @@ import { DataTable } from '../../components/DataTable.jsx';
 import { PageHeader } from '../../components/PageHeader.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { currency } from '../../utils/formatters.js';
-import { addNotification } from '../../utils/notificationStore.js';
+import { CustomNotification } from '../../components/CustomNotification.jsx';
 
 export function PurchaseOrders() {
   const [purchaseOrders, setPurchaseOrders] = useState([]);
@@ -25,10 +25,13 @@ export function PurchaseOrders() {
   const [submitSuccess, setSubmitSuccess] = useState('');
   const [submitError, setSubmitError] = useState('');
 
+  const [customAlert, setCustomAlert] = useState({ isOpen: false, type: 'success', title: '', message: '' });
+  const showAlert = (title, message, type = 'success') => setCustomAlert({ isOpen: true, type, title, message });
+
   const storedUser = sessionStorage.getItem('srm_user');
   const currentUser = storedUser ? JSON.parse(storedUser) : { id: 1, full_name: 'Admin User' };
 
-  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1/SUPPLIER-RELATIONSHIP-MANAGEMENT/SRM_PROJECT/backend/api').replace(/\/$/, '');
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1/SUPPLIER-RELATIONSHIP-MANAGEMENT-main/SRM_PROJECT/backend/api').replace(/\/$/, '');
 
   const fetchOrders = () => {
     setLoading(true);
@@ -80,26 +83,16 @@ export function PurchaseOrders() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          alert(`PO status successfully updated to: ${status.toUpperCase()}`);
-          addNotification({
-            category: 'orders',
-            icon: status === 'cancelled' ? 'alert' : 'cart',
-            title: `PO status updated: ${poDetails.po_number}`,
-            body: `${poDetails.po_number} was moved to ${status.toUpperCase()}.`,
-            type: status === 'cancelled' ? 'Alert' : 'Business',
-            link: '/admin/orders',
-          });
-          // Refetch single detail
+          showAlert('Status Updated', `PO status successfully updated to: ${status.toUpperCase()}`, 'success');
           handleInspectPo(poDetails.id);
-          // Refetch list
           fetchOrders();
         } else {
-          alert('Failed to update status: ' + data.message);
+          showAlert('Update Failed', 'Failed to update status: ' + data.message, 'error');
         }
       })
       .catch((err) => {
         console.error(err);
-        alert('An error occurred while updating PO status.');
+        showAlert('Error', 'An error occurred while updating PO status.', 'error');
       });
   };
 
@@ -162,14 +155,6 @@ export function PurchaseOrders() {
       .then((data) => {
         if (data.success) {
           setSubmitSuccess('Thank you! Supplier performance rating has been successfully saved in the database.');
-          addNotification({
-            category: 'performance',
-            icon: 'star',
-            title: `Supplier rating submitted: ${poDetails.supplier_name}`,
-            body: `Performance feedback for ${poDetails.po_number} has been saved.`,
-            type: 'Business',
-            link: '/admin/orders',
-          });
           setFormReviewText('');
           // Re-fetch PO details to display the saved review
           handleInspectPo(poDetails.id);
@@ -540,6 +525,14 @@ export function PurchaseOrders() {
           </div>
         </div>
       )}
+
+      <CustomNotification
+        isOpen={customAlert.isOpen}
+        type={customAlert.type}
+        title={customAlert.title}
+        message={customAlert.message}
+        onClose={() => setCustomAlert(a => ({ ...a, isOpen: false }))}
+      />
     </>
   );
 }

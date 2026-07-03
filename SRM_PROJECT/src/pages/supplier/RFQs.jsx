@@ -5,7 +5,7 @@ import { DataTable } from '../../components/DataTable.jsx';
 import { PageHeader } from '../../components/PageHeader.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { currency } from '../../utils/formatters.js';
-import { getStoredRfqs, mergeRfqLists, saveStoredRfqs } from '../../utils/rfqStore.js';
+import { getStoredRfqs, saveStoredRfqs } from '../../utils/rfqStore.js';
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,7 +24,7 @@ export function SupplierRFQs() {
     return JSON.parse(sessionStorage.getItem('srm_user') || '{"id":2,"fullName":"Supplier User","email":"supplier@srm.local","role":"supplier","companyName":"Apex Industrial Components"}');
   }, []);
 
-  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1/SUPPLIER-RELATIONSHIP-MANAGEMENT/SRM_PROJECT/backend/api').replace(/\/$/, '');
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1/SUPPLIER-RELATIONSHIP-MANAGEMENT-main/SRM_PROJECT/backend/api').replace(/\/$/, '');
 
   useEffect(() => {
     // 1. Fetch RFQs
@@ -32,9 +32,8 @@ export function SupplierRFQs() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.rfqs)) {
-          const mergedRfqs = mergeRfqLists(data.rfqs);
-          setRfqList(mergedRfqs);
-          saveStoredRfqs(mergedRfqs);
+          setRfqList(data.rfqs);
+          saveStoredRfqs(data.rfqs);
         }
       })
       .catch((err) => {
@@ -302,60 +301,102 @@ export function SupplierRFQs() {
     );
   };
 
+  const totalInvitations = rfqList.filter((rfq) => rfq.status !== 'Draft').length;
+  const submittedCount = bidsList.length;
+  const pendingCount = totalInvitations - submittedCount;
+
   return (
-    <>
+    <div className="flex flex-col h-[calc(100vh-8.5rem)] min-h-0 overflow-hidden space-y-4">
       <PageHeader title="RFQs" description="Review buyer sourcing events and submit supplier responses." />
-      <Card>
-        <CardHeader title="RFQ Invitations" subtitle="Open and evaluating opportunities" />
-        <DataTable
-          data={rfqList.filter((rfq) => rfq.status !== 'Draft')}
-          columns={[
-            { key: 'id', header: 'RFQ' },
-            { key: 'title', header: 'Title' },
-            { key: 'category', header: 'Category' },
-            { key: 'deadline', header: 'Deadline' },
-            { key: 'value', header: 'Value', render: (row) => currency(row.value) },
-            {
-              key: 'quotedPrice',
-              header: 'Your Quoted Price',
-              render: (row) => {
-                const bid = bidsList.find(b => (b.rfqPackage === row.id || b.rfq_package === row.id));
-                return bid ? (
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">{currency(bid.price)}</span>
-                ) : (
-                  <span className="text-slate-400 dark:text-slate-500 italic">Not Submitted</span>
-                );
-              }
-            },
-            { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
-            { 
-              key: 'action', 
-              header: 'Actions', 
-              render: (row) => {
-                const bid = bidsList.find(b => (b.rfqPackage === row.id || b.rfq_package === row.id));
-                return (
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="secondary" 
-                      className="h-9 px-3 text-xs flex items-center gap-1.5"
-                      onClick={() => handleOpenDrawer(row)}
-                    >
-                      <Eye className="h-4 w-4" /> View
-                    </Button>
-                    <Button 
-                      variant={bid ? "secondary" : "primary"}
-                      className="h-9 px-3 text-xs flex items-center gap-1.5"
-                      onClick={() => navigate('/supplier/bids', { state: { rfqId: row.id } })}
-                    >
-                      <Send className="h-4 w-4" /> {bid ? "Re-Bid" : "Bid"}
-                    </Button>
-                  </div>
-                );
-              } 
-            },
-          ]}
-        />
-      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0 overflow-hidden">
+        {/* RFQ Invitations Bento Box */}
+        <Card className="lg:col-span-2 flex flex-col h-full min-h-0 overflow-hidden">
+          <CardHeader title="RFQ Invitations" subtitle="Open and evaluating opportunities" />
+          <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
+            <DataTable
+              data={rfqList.filter((rfq) => rfq.status !== 'Draft')}
+              columns={[
+                { key: 'id', header: 'RFQ' },
+                { key: 'title', header: 'Title', nowrap: false },
+                { key: 'category', header: 'Category' },
+                { key: 'deadline', header: 'Deadline' },
+                { key: 'value', header: 'Value', render: (row) => currency(row.value) },
+                {
+                  key: 'quotedPrice',
+                  header: 'Your Quoted Price',
+                  render: (row) => {
+                    const bid = bidsList.find(b => (b.rfqPackage === row.id || b.rfq_package === row.id));
+                    return bid ? (
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">{currency(bid.price)}</span>
+                    ) : (
+                      <span className="text-slate-400 dark:text-slate-500 italic text-[11px]">Not Submitted</span>
+                    );
+                  }
+                },
+                { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+                { 
+                  key: 'action', 
+                  header: 'Actions', 
+                  render: (row) => {
+                    const bid = bidsList.find(b => (b.rfqPackage === row.id || b.rfq_package === row.id));
+                    return (
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="secondary" 
+                          className="h-8 px-2.5 text-xs flex items-center gap-1.5"
+                          onClick={() => handleOpenDrawer(row)}
+                        >
+                          <Eye className="h-3.5 w-3.5" /> View
+                        </Button>
+                        <Button 
+                          variant={bid ? "secondary" : "primary"}
+                          className="h-8 px-2.5 text-xs flex items-center gap-1.5"
+                          onClick={() => navigate('/supplier/bids', { state: { rfqId: row.id } })}
+                        >
+                          <Send className="h-3.5 w-3.5" /> {bid ? "Re-Bid" : "Bid"}
+                        </Button>
+                      </div>
+                    );
+                  } 
+                },
+              ]}
+            />
+          </div>
+        </Card>
+
+        {/* Side panel bento cards */}
+        <div className="flex flex-col gap-6 h-full overflow-y-auto custom-scrollbar pr-1">
+          {/* Bento Stats Card */}
+          <Card className="p-5 flex flex-col shrink-0">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3">Sourcing Progress</h3>
+            <div className="grid grid-cols-2 gap-3 text-center">
+              <div className="bg-slate-50 dark:bg-slate-950/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Submitted Bids</span>
+                <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-1 block">
+                  {submittedCount} / {totalInvitations}
+                </span>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-950/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Pending Quotes</span>
+                <span className="text-lg font-bold text-amber-600 dark:text-amber-400 mt-1 block">
+                  {pendingCount}
+                </span>
+              </div>
+            </div>
+          </Card>
+
+          {/* Quick Guidelines Card */}
+          <Card className="p-5 flex flex-col shrink-0">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-2">Submission Guidelines</h3>
+            <ul className="text-[11px] text-slate-500 dark:text-slate-400 space-y-2 leading-relaxed">
+              <li className="flex gap-1.5"><span className="text-emerald-500 font-bold">•</span> Check deadline dates carefully. No late submissions will be accepted.</li>
+              <li className="flex gap-1.5"><span className="text-emerald-500 font-bold">•</span> Upload standard technical specs and quality compliance documents.</li>
+              <li className="flex gap-1.5"><span className="text-emerald-500 font-bold">•</span> Verify tax declarations and delivery lead times before bidding.</li>
+            </ul>
+          </Card>
+        </div>
+      </div>
 
       {/* Sliding side panel drawer — only mounted when open */}
       {drawerOpen && (
@@ -403,6 +444,6 @@ export function SupplierRFQs() {
           </div>
         </>
       )}
-    </>
+    </div>
   );
 }

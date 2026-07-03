@@ -7,12 +7,11 @@ import { Modal } from '../../components/Modal.jsx';
 import { useDisclosure } from '../../hooks/useDisclosure.js';
 import { FormField, inputClass } from '../../components/FormField.jsx';
 import { currency } from '../../utils/formatters.js';
-import { addNotification } from '../../utils/notificationStore.js';
-import { getStoredRfqs } from '../../utils/rfqStore.js';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Check, UploadCloud, FileText, Send, ArrowLeftRight, Loader2, ClipboardList, Package, Calendar, IndianRupee, Tag, Info, AlertCircle, MessageSquare } from 'lucide-react';
 import { CustomNotification } from '../../components/CustomNotification.jsx';
+import { pushNotification } from '../../utils/notificationStore.js';
 
 const initialForm = {
   rfqPackage: 'RFQ-24061',
@@ -36,14 +35,7 @@ export function MyBids() {
     return JSON.parse(sessionStorage.getItem('srm_user') || '{"id":2,"fullName":"Supplier User","email":"supplier@srm.local","role":"supplier","companyName":"Apex Industrial Components"}');
   }, []);
   
-  const [bidsList, setBidsList] = useState(() => {
-    try {
-      const cached = localStorage.getItem('srm_bids');
-      return cached ? JSON.parse(cached) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [bidsList, setBidsList] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [isParsing, setIsParsing] = useState(false);
   const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
@@ -61,7 +53,7 @@ export function MyBids() {
   const [countdown, setCountdown] = useState(null);
   const countdownRef = useRef(null);
 
-  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1/SUPPLIER-RELATIONSHIP-MANAGEMENT/SRM_PROJECT/backend/api').replace(/\/$/, '');
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1/SUPPLIER-RELATIONSHIP-MANAGEMENT-main/SRM_PROJECT/backend/api').replace(/\/$/, '');
 
   // Helper to map parsed PDF items to RFQ items
   const mapItems = useCallback((targetItems, parsedList) => {
@@ -202,14 +194,6 @@ export function MyBids() {
       })
       .catch((err) => {
         console.error('Failed to fetch Bids from API, using localStorage:', err);
-        try {
-          const cached = localStorage.getItem('srm_bids');
-          if (cached) {
-            setBidsList(JSON.parse(cached));
-          }
-        } catch (e) {
-          console.error('Failed to read bids from localStorage:', e);
-        }
       });
   }, [apiBaseUrl, currentUser.id]);
 
@@ -332,6 +316,16 @@ export function MyBids() {
     setBidsList(updated);
     localStorage.setItem('srm_bids', JSON.stringify(updated));
 
+    // Notify admin that a bid has been submitted
+    pushNotification({
+      category: 'sourcing',
+      icon: 'FileText',
+      iconColor: 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-950/20',
+      title: `New Bid: ${newBid.id}`,
+      body: `"${newBid.supplierName}" submitted a proposal for ${newBid.rfqPackage}. Quoted: ${currency(newBid.price)}.`,
+      type: 'Bid',
+    }, 'admin');
+
     fetch(`${apiBaseUrl}/bids.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -340,14 +334,6 @@ export function MyBids() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          addNotification({
-            category: 'sourcing',
-            icon: 'check',
-            title: `Bid submitted for ${form.rfqPackage}`,
-            body: `${currentUser.companyName || currentUser.fullName || 'Supplier'} submitted a quote worth ${currency(totals.grandTotal)}.`,
-            type: 'Business',
-            link: '/supplier/bids',
-          });
           resetAndClose();
           fetchBids();
           setCustomAlert({
@@ -360,14 +346,6 @@ export function MyBids() {
       })
       .catch((err) => {
         console.error('Failed to sync Bid to database:', err);
-        addNotification({
-          category: 'sourcing',
-          icon: 'check',
-          title: `Bid saved locally for ${form.rfqPackage}`,
-          body: `Your quote worth ${currency(totals.grandTotal)} was recorded locally while the server was unavailable.`,
-          type: 'Action Required',
-          link: '/supplier/bids',
-        });
         resetAndClose();
         fetchBids();
         setCustomAlert({

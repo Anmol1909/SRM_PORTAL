@@ -33,8 +33,8 @@ export function CustomNotification({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl animate-in zoom-in-95 duration-200 text-slate-800 dark:text-slate-100 font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 backdrop-blur-md p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/95 backdrop-blur-xl p-6 shadow-2xl animate-in zoom-in-95 duration-200 text-slate-800 dark:text-slate-100 font-sans">
         
         {/* Render Icon based on Type */}
         <div className="flex flex-col items-center text-center">
@@ -74,13 +74,13 @@ export function CustomNotification({
               value={promptVal}
               onChange={(e) => setPromptVal(e.target.value)}
               placeholder={promptPlaceholder}
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-350 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-brand-500 transition"
+              className="w-full bg-white/40 dark:bg-slate-950/40 border border-white/20 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-brand-500 backdrop-blur-sm transition"
               required
             />
           )}
 
           {/* Buttons Layout */}
-          <div className="flex justify-end gap-3 border-t border-slate-100 dark:border-slate-850 pt-4 mt-6">
+          <div className="flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4 mt-6">
             {(type === 'confirm' || type === 'prompt') ? (
               <>
                 <button

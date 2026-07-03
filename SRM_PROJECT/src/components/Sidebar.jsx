@@ -7,8 +7,8 @@ export function Sidebar({ items, title, subtitle, isOpen, onClose }) {
   const isAdmin = subtitle?.toLowerCase().includes('admin');
   const RoleIcon = isAdmin ? ShieldCheck : Truck;
   const roleBadgeClass = isAdmin
-    ? 'bg-blue-50 text-blue-700 ring-blue-600/20'
-    : 'bg-violet-50 text-violet-700 ring-violet-600/20';
+    ? 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-950/50 dark:text-blue-300 dark:ring-blue-500/35'
+    : 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/35';
 
   const currentUser = (() => {
     try {
@@ -23,11 +23,11 @@ export function Sidebar({ items, title, subtitle, isOpen, onClose }) {
   const userName = isRoleMatch && currentUser?.fullName ? currentUser.fullName : (isAdmin ? 'Admin User' : 'Supplier User');
   const userSubtext = isAdmin ? 'Super Admin' : (isRoleMatch && currentUser?.companyName ? currentUser.companyName : 'Apex Industrial Components');
   const sidebarClass = isAdmin
-    ? 'border-blue-950/20 bg-[#06265a] text-white shadow-[4px_0_28px_rgba(2,6,23,0.18)]'
-    : 'border-emerald-950/20 bg-[#046044] text-white shadow-[4px_0_28px_rgba(2,6,23,0.16)]';
+    ? 'border-white/10 bg-[#06265a]/90 dark:bg-blue-950/45 dark:border-blue-500/15 backdrop-blur-xl text-white shadow-[4px_0_28px_rgba(2,6,23,0.25)]'
+    : 'border-white/10 bg-[#046044]/90 dark:bg-emerald-950/45 dark:border-emerald-500/15 backdrop-blur-xl text-white shadow-[4px_0_28px_rgba(2,6,23,0.2)]';
   const activeClass = isAdmin
-    ? 'bg-blue-600 text-white shadow-[inset_3px_0_0_0] shadow-white/80'
-    : 'bg-emerald-500 text-white shadow-[inset_3px_0_0_0] shadow-white/80';
+    ? 'bg-white/15 text-white shadow-[inset_3px_0_0_0] shadow-blue-400 backdrop-blur-md'
+    : 'bg-white/15 text-white shadow-[inset_3px_0_0_0] shadow-emerald-400 backdrop-blur-md';
 
   const renderLink = (item) => (
     <NavLink
@@ -54,7 +54,7 @@ export function Sidebar({ items, title, subtitle, isOpen, onClose }) {
         onClick={onClose}
       />
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 transform flex-col border-r transition-transform duration-300 lg:static lg:translate-x-0 ${sidebarClass} ${
+        className={`fixed inset-y-0 left-0 z-40 flex h-full w-72 transform flex-col border-r transition-transform duration-300 lg:static lg:translate-x-0 lg:h-full ${sidebarClass} ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -83,7 +83,7 @@ export function Sidebar({ items, title, subtitle, isOpen, onClose }) {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-4">
+        <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-4 custom-scrollbar">
           {items.map((item) =>
             item.items ? (
               <div key={item.section}>

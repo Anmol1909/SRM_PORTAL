@@ -38,33 +38,6 @@ function update_bid_negotiated_values($pdo, $bid_id, $new_price) {
     // 2. Update grand_total in supplier_quotes and price in bids
     $pdo->prepare("UPDATE supplier_quotes SET grand_total = ? WHERE id = ?")->execute([$new_price, $bid_id]);
     $pdo->prepare("UPDATE bids SET price = ? WHERE id = ?")->execute([$new_price, $bid_id]);
-
-    $original_subtotal = (float)$quote['subtotal'];
-    $freight = (float)$quote['freight'];
-    $original_tax_total = (float)$quote['tax_total'];
-    $total_ex_freight = $original_subtotal + $original_tax_total;
-    
-    if ($total_ex_freight > 0) {
-        $scale_factor = ($new_price - $freight) / $total_ex_freight;
-        
-        $new_subtotal = $original_subtotal * $scale_factor;
-        $new_tax_total = $original_tax_total * $scale_factor;
-        
-        $pdo->prepare("UPDATE supplier_quotes SET subtotal = ?, tax_total = ? WHERE id = ?")
-            ->execute([$new_subtotal, $new_tax_total, $bid_id]);
-            
-        $stmtItems = $pdo->prepare("SELECT * FROM supplier_quote_items WHERE supplier_quote_id = ?");
-        $stmtItems->execute([$bid_id]);
-        $items = $stmtItems->fetchAll();
-        
-        foreach ($items as $item) {
-            $new_unit_price = $item['unit_price'] * $scale_factor;
-            $new_line_total = $item['line_total'] * $scale_factor;
-            
-            $pdo->prepare("UPDATE supplier_quote_items SET unit_price = ?, line_total = ? WHERE id = ?")
-                ->execute([$new_unit_price, $new_line_total, $item['id']]);
-        }
-    }
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -363,7 +336,7 @@ if ($method === 'POST') {
             $delivery_date = date('Y-m-d', strtotime('+' . $delivery_days . ' days'));
 
             // 5. Build legal terms
-            $legal_terms = "PURCHASE ORDER AGREEMENT — TATA MOTORS LTD
+            $legal_terms = "PURCHASE ORDER AGREEMENT — NEXUS MANUFACTURING LTD
  
 PO Number      : {$po_number}
 Issued Date    : " . date('d M Y') . "
@@ -374,12 +347,12 @@ Delivery By    : {$delivery_date}
 Total Value    : INR " . number_format((float)$quote['grand_total'], 2) . "
  
 TERMS & CONDITIONS:
-1. This Purchase Order constitutes a legally binding procurement contract issued by Tata Motors Ltd. (hereinafter referred to as 'the Buyer').
+1. This Purchase Order constitutes a legally binding procurement contract issued by Nexus Manufacturing Ltd. (hereinafter referred to as 'the Buyer').
 2. The Supplier agrees to deliver all items specified herein in full, on or before the delivery date stated above.
 3. Payment Terms: Net 30 days upon delivery and submission of a valid GST tax invoice.
-4. Any deviation in quantity, specifications, or delivery schedule requires prior written approval from Tata Motors Procurement Department.
+4. Any deviation in quantity, specifications, or delivery schedule requires prior written approval from Nexus Manufacturing Procurement Department.
 5. Goods not conforming to specifications will be rejected at the Supplier's expense.
-6. Tata Motors reserves the right to cancel this PO if the Supplier fails to meet agreed terms, with written notice of 7 business days.
+6. Nexus Manufacturing reserves the right to cancel this PO if the Supplier fails to meet agreed terms, with written notice of 7 business days.
 7. Governing Law: Laws of India. Jurisdiction: Jharkhand High Court.
  
 This Purchase Order is issued electronically and is legally valid without a physical signature under the Information Technology Act, 2000.";
